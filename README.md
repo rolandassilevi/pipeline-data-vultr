@@ -1,2 +1,2 @@
-# pipeline-data-vultr
+# Pipeline Data Vultr
 Pipeline Data Vultr
