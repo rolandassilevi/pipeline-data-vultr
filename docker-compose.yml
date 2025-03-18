@@ -36,7 +36,7 @@ services:
       - "3000:3000"
 
   dbt:
-    image: ghcr.io/dbt-labs/dbt:latest
+    image: fishtownanalytics/dbt:latest
     container_name: dbt
     volumes:
       - ./dbt_project:/usr/app
