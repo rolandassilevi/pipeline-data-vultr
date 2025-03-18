@@ -4,7 +4,7 @@
 Le pipeline de données suit l’architecture suivante :
 
 ```
-MySQL (Source) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
+CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
 ```
 
 ```
@@ -17,7 +17,8 @@ GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airfl
 - **Vultr (Ubuntu)** : Héberge les services Docker pour exécuter l’ensemble du pipeline.
 - **Docker Compose** : Gère le déploiement des services (MySQL, DBT, Vertica, Metabase, Airflow).
 - **Airflow** : Orchestration des tâches ETL (extraction, transformation, chargement des données).
-- **MySQL** : Source des données brutes.
+- **CSV** : Fichier source contenant les données brutes.
+- **MySQL** : Stockage temporaire des données avant transformation.
 - **DBT (Data Build Tool)** : Transformation et modélisation des données.
 - **Vertica** : Stockage analytique des données transformées.
 - **Metabase** : Visualisation des données stockées dans Vertica.
@@ -29,7 +30,8 @@ GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airfl
 |------------|------|
 | **GitHub Actions** | CI/CD pour déploiement automatique |
 | **Docker & Docker Compose** | Conteneurisation et orchestration des services |
-| **MySQL** | Base de données transactionnelle (source) |
+| **CSV** | Source des données brutes |
+| **MySQL** | Stockage intermédiaire des données |
 | **DBT** | Transformation et modélisation des données |
 | **Vertica** | Stockage analytique (Data Warehouse) |
 | **Metabase** | Visualisation et exploration des données |
@@ -41,13 +43,18 @@ GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airfl
 
 ```
 pipeline-data-vultr/
-│── dags/                          # DAGs pour Airflow (orchestration)
-│   ├── mysql_to_vertica.py        # DAG orchestrant l'ETL
+│── dags/                         # DAGs pour Airflow (orchestration)
+│   ├── csv_to_mysql.py           # DAG orchestrant l'ingestion CSV → MySQL
+│   ├── mysql_to_vertica.py       # DAG orchestrant l'ETL MySQL → Vertica
 │── dbt_project/                   # Projet DBT (modélisation SQL)
 │   ├── profiles.yml               # Configuration DBT pour Vertica
 │   ├── models/                    # Modèles SQL pour la transformation
 │── scripts/                       # Scripts Python pour ingestion
+│   ├── create_mysql_table.py      # Script de création de table dans MySQL
+│   ├── load_csv_to_mysql.py       # Script de chargement CSV → MySQL
 │   ├── transfer_data.py           # Script de transfert MySQL → Vertica
+│── data/                          # Dossier contenant les fichiers CSV
+│   ├── inverter.csv               # Fichier CSV contenant les données des onduleurs
 │── .github/workflows/             # CI/CD GitHub Actions (déploiement auto)
 │   ├── deploy.yml                 # Pipeline CI/CD pour Vultr
 │── docker-compose.yml             # Déploiement multi-services avec Docker
@@ -60,23 +67,30 @@ pipeline-data-vultr/
 
 ### **📌 1. `docker-compose.yml`**
 Définit et orchestre les services du pipeline :
-- **MySQL** : Stocke les données brutes.
+- **CSV** : Source des données.
+- **MySQL** : Stocke temporairement les données brutes.
 - **Vertica** : Stocke les données transformées.
 - **DBT** : Transforme les données avant stockage.
 - **Metabase** : Visualisation des données.
 - **Airflow** : Orchestration ETL.
 - **Transfer** : Extrait, transforme et charge les données.
 
-### **📌 2. `scripts/transfer_data.py`**
+### **📌 2. `scripts/load_csv_to_mysql.py`**
+- **Charge** les données depuis le fichier `inverter.csv` vers MySQL.
+
+### **📌 3. `scripts/transfer_data.py`**
 - **Extrait** les données de MySQL.
 - **Transforme** les données avec DBT.
 - **Charge** les données transformées dans Vertica.
 
-### **📌 3. `dags/mysql_to_vertica.py`**
+### **📌 4. `dags/csv_to_mysql.py`**
 - Automatisation avec **Apache Airflow**.
-- Exécute le script de transformation et chargement **chaque jour**.
+- Charge les fichiers CSV vers MySQL automatiquement.
 
-### **📌 4. `.github/workflows/deploy.yml`**
+### **📌 5. `dags/mysql_to_vertica.py`**
+- Orchestration de la transformation et du chargement des données avec DBT et Vertica.
+
+### **📌 6. `.github/workflows/deploy.yml`**
 - Déploiement **automatique** du pipeline sur **Vultr** après chaque `git push`.
 - Connexion SSH sécurisée avec un **secret GitHub** (`VULTR_SSH_KEY`).
 
