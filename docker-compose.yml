@@ -55,6 +55,24 @@ services:
     environment:
       - EXECUTOR=SequentialExecutor
 
+  create_table:
+    image: python:3.9
+    container_name: create_table
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - mysql
+    command: ["python", "/scripts/create_mysql_table.py"]
+
+  load_csv_mysql:
+    image: python:3.9
+    container_name: load_csv_mysql
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - mysql
+    command: ["python", "/scripts/load_csv_to_mysql.py"]
+
   transfer:
     image: python:3.9
     container_name: transfer
@@ -68,3 +86,4 @@ services:
 volumes:
   mysql_data:
   vertica_data:
+
