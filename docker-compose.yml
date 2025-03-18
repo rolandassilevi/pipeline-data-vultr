@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  vertica:
+    image: vertica/vertica-ce
+    container_name: vertica
+    restart: always
+    environment:
+      VERTICA_DB: mywarehouse
+      VERTICA_USER: dbadmin
+      VERTICA_PASSWORD: password
+    ports:
+      - "5433:5433"
+    volumes:
+      - vertica_data:/data
+
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    restart: always
+    ports:
+      - "3000:3000"
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt:latest
+    container_name: dbt
+    volumes:
+      - ./dbt_project:/usr/app
+    depends_on:
+      - mysql
+      - vertica
+
+  airflow:
+    image: puckel/docker-airflow
+    container_name: airflow
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    environment:
+      - EXECUTOR=SequentialExecutor
+
+  transfer:
+    image: python:3.9
+    container_name: transfer
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - mysql
+      - vertica
+    command: ["python", "/scripts/transfer_data.py"]
+
+volumes:
+  mysql_data:
+  vertica_data:

@@ -1,0 +1,26 @@
+name: Deploy to Vultr
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Connect to Vultr and Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VULTR_SERVER_IP }}
+        username: root
+        key: ${{ secrets.VULTR_SSH_KEY }}
+        script: |
+          cd /root/pipeline-data-vultr
+          git pull origin main
+          docker-compose down
+          docker-compose up -d
