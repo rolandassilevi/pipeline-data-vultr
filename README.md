@@ -12,7 +12,7 @@ CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertic
 
 ```
 
-Schéma du Pipeline
+### Schéma du Pipeline
 
 ```
                 ┌────────────────────┐
