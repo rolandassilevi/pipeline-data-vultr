@@ -3,12 +3,65 @@
 ## **1️⃣ Architecture du Pipeline**
 Le pipeline de données suit l’architecture suivante :
 
-```
-CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
-```
 
 ```
+
 GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airflow (Orchestration)
+
+CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
+
+```
+
+Schéma du Pipeline
+
+```
+                ┌────────────────────┐
+                │      GitHub        │
+                │  (CI/CD & Code)    │
+                └────────────────────┘
+                         │
+                         ▼
+                ┌────────────────────┐
+                │      Vultr         │
+                │  (Ubuntu Server)   │
+                └────────────────────┘
+                         │
+                         ▼
+                ┌────────────────────┐
+                │   Docker Compose   │
+                │  (Services Multi)  │
+                └────────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────────┐
+        │            Airflow                 │
+        │       (Orchestration)              │
+        └────────────────────────────────────┘
+                         │
+                         ▼
+                ┌────────────────────┐
+                │      MySQL         │
+                │  (Stockage Source) │
+                └────────────────────┘
+                         │
+                         ▼
+                ┌─────────────────────┐
+                │        DBT          │
+                │  (Modélisation SQL) │
+                └─────────────────────┘
+                         │
+                         ▼
+                ┌───────────────────────┐
+                │      Vertica          │
+                │ (Stockage Analytique) │
+                └───────────────────────┘
+                         │
+                         ▼
+                ┌────────────────────┐
+                │      Metabase      │
+                │  (Visualisation)   │
+                └────────────────────┘
+
 ```
 
 
@@ -43,29 +96,38 @@ GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airfl
 
 ```
 pipeline-data-vultr/
-│── dags/                         # DAGs pour Airflow (orchestration)
-│   ├── csv_to_mysql.py           # DAG orchestrant l'ingestion CSV → MySQL
-│   ├── mysql_to_vertica.py       # DAG orchestrant l'ETL MySQL → Vertica
-│── dbt_project/                   # Projet DBT (modélisation SQL)
-│   ├── profiles.yml               # Configuration DBT pour Vertica
-│   ├── models/                    # Modèles SQL pour la transformation
-│── scripts/                       # Scripts Python pour ingestion
-│   ├── create_mysql_table.py      # Script de création de table dans MySQL
-│   ├── load_csv_to_mysql.py       # Script de chargement CSV → MySQL
-│   ├── transfer_data.py           # Script de transfert MySQL → Vertica
-│── data/                          # Dossier contenant les fichiers CSV
-│   ├── inverter.csv               # Fichier CSV contenant les données des onduleurs
-│── .github/workflows/             # CI/CD GitHub Actions (déploiement auto)
-│   ├── deploy.yml                 # Pipeline CI/CD pour Vultr
-│── docker-compose.yml             # Déploiement multi-services avec Docker
-│── README.md                      # Documentation du projet
+│── dags/                               # DAGs pour Airflow (orchestration)
+│   ├── csv_to_mysql.py                 # DAG orchestrant l'ingestion CSV → MySQL
+│   ├── mysql_to_vertica.py             # DAG orchestrant l'ETL MySQL → Vertica
+│── dbt_project/                        # Projet DBT (modélisation SQL)
+│   ├── profiles.yml                    # Configuration DBT pour Vertica
+│   ├── dbt_project.yml                 # Paramètres du projet DBT
+│   ├── logs/                           # Logs d'exécution de DBT
+│   │   ├── dbt.log                     # Fichier de log DBT
+│   ├── models/                         # Modèles SQL pour la transformation
+│   │   ├── marts/                      # Contient les tables de faits
+│   │   │   ├── fact_inverter_data.sql  # Table de faits principale
+│   │   ├── staging/                    # Contient les tables de staging
+│   │   │   ├── stg_inverter_data.sql   # Table staging des données 
+│── scripts/                            # Scripts Python pour ingestion et transfert
+│   ├── create_mysql_table.py           # Script de création de table dans MySQL
+│   ├── load_csv_to_mysql.py            # Script de chargement CSV → MySQL
+│   ├── transfer_data.py                # Script de transfert MySQL → Vertica
+│── data/                               # Dossier contenant les fichiers CSV
+│   ├── inverter.csv                    # Fichier CSV contenant les données des onduleurs
+│── db_driver/                          # Drivers de Base de données pour Metabase
+│   ├── vertica-jdbc-24.1.0-0.jar       # Vertica JDBC Driver
+│── .github/workflows/                  # CI/CD GitHub Actions (déploiement auto)
+│   ├── deploy.yml                      # Pipeline CI/CD pour Vultr
+│── docker-compose.yml                  # Déploiement multi-services avec Docker
+│── README.md                           # Documentation du projet
 ```
 
 ---
 
 ## **4️⃣ Description des Composants du Projet**
 
-### **📌 1. `docker-compose.yml`**
+### ** 1. `docker-compose.yml`**
 Définit et orchestre les services du pipeline :
 - **CSV** : Source des données.
 - **MySQL** : Stocke temporairement les données brutes.
@@ -75,28 +137,44 @@ Définit et orchestre les services du pipeline :
 - **Airflow** : Orchestration ETL.
 - **Transfer** : Extrait, transforme et charge les données.
 
-### **📌 2. `scripts/load_csv_to_mysql.py`**
+**Services Déployés**
+
+|Service	    | Image	                            |Rôle                               |
+|---------------|-----------------------------------|-----------------------------------|
+|MySQL	        |mysql:latest	                    |Base de données source             |
+|Vertica	    |vertica/vertica-ce	                |Stockage analytique                |
+|Metabase	    |metabase/metabase	                |Visualisation des données          |
+|DBT	        |ghcr.io/dbt-labs/dbt-core:1.5.0	|Modélisation et transformation SQL |
+|Airflow	    |puckel/docker-airflow	            |Orchestration des pipelines        |
+|Python (ETL)	|python:3.9	                        |Scripts pour ingestion et transfert|
+
+### ** 2. `scripts/load_csv_to_mysql.py`**
 - **Charge** les données depuis le fichier `inverter.csv` vers MySQL.
 
-### **📌 3. `scripts/transfer_data.py`**
+### ** 3. `scripts/transfer_data.py`**
 - **Extrait** les données de MySQL.
 - **Transforme** les données avec DBT.
 - **Charge** les données transformées dans Vertica.
 
-### **📌 4. `dags/csv_to_mysql.py`**
+### ** 4. `dags/csv_to_mysql.py`**
 - Automatisation avec **Apache Airflow**.
 - Charge les fichiers CSV vers MySQL automatiquement.
 
-### **📌 5. `dags/mysql_to_vertica.py`**
+### ** 5. `dags/mysql_to_vertica.py`**
 - Orchestration de la transformation et du chargement des données avec DBT et Vertica.
 
-### **📌 6. `.github/workflows/deploy.yml`**
+### ** 6. `.github/workflows/deploy.yml`**
 - Déploiement **automatique** du pipeline sur **Vultr** après chaque `git push`.
 - Connexion SSH sécurisée avec un **secret GitHub** (`VULTR_SSH_KEY`).
 
 ---
 
 ## **5️⃣ Déploiement du Projet**
+### **🔹 0. Assurez-vous d'avoir Docker et Docker Compose installés sur votre serveur Vultr :**
+```bash
+sudo apt update && sudo apt install -y docker docker-compose
+```
+
 ### **🔹 1. Cloner le Projet sur Vultr**
 ```bash
 git clone https://github.com/ton_username/pipeline-data-vultr.git
@@ -113,13 +191,53 @@ docker-compose up -d
 docker ps
 ```
 
-### **🔹 4. Accéder aux Services**
+### **🔹 4. Effectuer les tests et vérification**
+- Tester le Fonctionnement
+Vérifier MySQL
+
+```bash
+docker exec -it mysql mysql -u user -p -D mydb -e "SHOW TABLES;"
+```
+
+Vérifier Vertica
+```bash
+docker exec -it vertica /opt/vertica/bin/vsql -U dbadmin -d VMart -c "SELECT COUNT(*) FROM inverter_data;"
+```
+
+Vérifier DBT
+```bash
+docker exec -it dbt dbt debug
+docker exec -it dbt dbt run
+```
+
+Vérifier Metabase
+Accédez à Metabase via le navigateur
+http://<VULTR_SERVER_IP>:3000/
+
+Aller dans "Bases de données"
+Ajouter une connexion Vertica
+Tester avec cette requête :
+```sql
+SELECT * FROM inverter_data LIMIT 10;
+```
+
+- Automatisation avec GitHub Actions
+Le pipeline CI/CD déploie automatiquement les services sur Vultr après chaque mise à jour.
+
+Fichier CI/CD : .github/workflows/deploy.yml
+Secrets GitHub à ajouter :
+VULTR_SERVER_IP = xxx.xxx.xxx.xxx
+VULTR_SSH_KEY = Clé SSH privée
+
+
+### **🔹 5. Accéder aux Services**
 | Service | URL / Commande |
 |------------|--------------------|
 | **Metabase** | `http://your_server_ip:3000` |
 | **Airflow** | `http://your_server_ip:8080` |
 | **MySQL** | `mysql -u user -p -h your_server_ip -D mydb` |
 | **Vertica** | `/opt/vertica/bin/vsql -U dbadmin -d mywarehouse` |
+
 
 ---
 
@@ -130,4 +248,6 @@ Chaque **push sur `main`** déclenche **GitHub Actions** qui :
 3. **Redémarre Docker Compose** pour appliquer les modifications.
 
 
+## **Auteur: Roland ASSILEVI**
+## **Mars 2025**
 
