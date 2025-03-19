@@ -127,7 +127,7 @@ pipeline-data-vultr/
 
 ## **4️⃣ Description des Composants du Projet**
 
-### ** 1. `docker-compose.yml`**
+### 1. `docker-compose.yml`
 Définit et orchestre les services du pipeline :
 - **CSV** : Source des données.
 - **MySQL** : Stocke temporairement les données brutes.
@@ -137,7 +137,7 @@ Définit et orchestre les services du pipeline :
 - **Airflow** : Orchestration ETL.
 - **Transfer** : Extrait, transforme et charge les données.
 
-**Services Déployés**
+Services Déployés
 
 |Service	    | Image	                            |Rôle                               |
 |---------------|-----------------------------------|-----------------------------------|
@@ -148,22 +148,22 @@ Définit et orchestre les services du pipeline :
 |Airflow	    |puckel/docker-airflow	            |Orchestration des pipelines        |
 |Python (ETL)	|python:3.9	                        |Scripts pour ingestion et transfert|
 
-### ** 2. `scripts/load_csv_to_mysql.py`**
+### 2. `scripts/load_csv_to_mysql.py`
 - **Charge** les données depuis le fichier `inverter.csv` vers MySQL.
 
-### ** 3. `scripts/transfer_data.py`**
+### 3. `scripts/transfer_data.py`
 - **Extrait** les données de MySQL.
 - **Transforme** les données avec DBT.
 - **Charge** les données transformées dans Vertica.
 
-### ** 4. `dags/csv_to_mysql.py`**
+### 4. `dags/csv_to_mysql.py`
 - Automatisation avec **Apache Airflow**.
 - Charge les fichiers CSV vers MySQL automatiquement.
 
-### ** 5. `dags/mysql_to_vertica.py`**
+### 5. `dags/mysql_to_vertica.py`
 - Orchestration de la transformation et du chargement des données avec DBT et Vertica.
 
-### ** 6. `.github/workflows/deploy.yml`**
+### 6. `.github/workflows/deploy.yml`
 - Déploiement **automatique** du pipeline sur **Vultr** après chaque `git push`.
 - Connexion SSH sécurisée avec un **secret GitHub** (`VULTR_SSH_KEY`).
 
@@ -248,6 +248,6 @@ Chaque **push sur `main`** déclenche **GitHub Actions** qui :
 3. **Redémarre Docker Compose** pour appliquer les modifications.
 
 
-## **Auteur: Roland ASSILEVI**
+## **Auteur : Roland ASSILEVI**
 ## **Mars 2025**
 
