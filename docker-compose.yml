@@ -36,13 +36,13 @@ services:
       - "3000:3000"
 
   dbt:
-    image: ghcr.io/dbt-labs/dbt-core:1.5.0
+    image: ghcr.io/dbt-labs/dbt-postgres:latest
     container_name: dbt
     volumes:
       - ./dbt_project:/usr/app
     depends_on:
-      - mysql
       - vertica
+    command: ["sleep", "infinity"]  # Garde DBT actif
 
   airflow:
     image: puckel/docker-airflow
@@ -62,16 +62,17 @@ services:
       - ./scripts:/scripts
     depends_on:
       - mysql
-    command: ["python", "/scripts/create_mysql_table.py"]
+    command: ["sh", "-c", "pip install mysql-connector-python && python /scripts/create_mysql_table.py"]
 
   load_csv_mysql:
     image: python:3.9
     container_name: load_csv_mysql
     volumes:
       - ./scripts:/scripts
+      - ./data:/data  # Ajout du volume pour le fichier CSV
     depends_on:
       - mysql
-    command: ["python", "/scripts/load_csv_to_mysql.py"]
+    command: ["sh", "-c", "pip install mysql-connector-python && python /scripts/load_csv_to_mysql.py"]
 
   transfer:
     image: python:3.9
@@ -81,7 +82,7 @@ services:
     depends_on:
       - mysql
       - vertica
-    command: ["python", "/scripts/transfer_data.py"]
+    command: ["sh", "-c", "pip install mysql-connector-python vertica_python && python /scripts/transfer_data.py"]
 
 volumes:
   mysql_data:

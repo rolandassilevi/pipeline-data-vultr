@@ -1,0 +1,17 @@
+name: 'pipeline_data_vultr'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+models:
+  pipeline_data_vultr:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
+#name: pipeline_data_vultr → Nom du projet DBT.
+#profile: default → Correspond au profil dans profiles.yml.
+#models.pipeline_data_vultr.staging → Les tables intermédiaires seront des vues.
+#models.pipeline_data_vultr.marts → Les tables finales seront matérialisées.

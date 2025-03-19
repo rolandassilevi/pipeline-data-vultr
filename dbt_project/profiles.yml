@@ -1,0 +1,18 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: vertica
+      host: vertica
+      port: 5433
+      user: dbadmin
+      password: password
+      database: VMart
+      schema: public
+      threads: 4
+
+#type: vertica → Utilise Vertica comme backend DBT.
+#host: vertica → Nom du service dans Docker Compose.
+#database: VMart → La base de données utilisée (VMart par défaut dans Vertica CE).
+#schema: public → DBT va créer ses transformations dans ce schéma.
+#threads: 4 → Optimisation pour exécuter plusieurs requêtes en parallèle.
