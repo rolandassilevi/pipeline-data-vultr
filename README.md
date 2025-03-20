@@ -12,6 +12,18 @@ CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertic
 
 ```
 
+### **🔹 Description des composants**
+- **GitHub** : Contient le code source et gère l’intégration et le déploiement continu (CI/CD) avec GitHub Actions.
+- **Vultr (Ubuntu)** : Héberge les services Docker pour exécuter l’ensemble du pipeline.
+- **Docker Compose** : Gère le déploiement des services (MySQL, DBT, Vertica, Metabase, Airflow).
+- **Airflow** : Orchestration des tâches ETL (extraction, transformation, chargement des données).
+- **CSV** : Fichier source contenant les données brutes.
+- **MySQL** : Stockage temporaire des données avant transformation.
+- **DBT (Data Build Tool)** : Transformation et modélisation des données.
+- **Vertica** : Stockage analytique des données transformées.
+- **Metabase** : Visualisation des données stockées dans Vertica.
+
+
 ### Schéma du Pipeline
 
 ```
@@ -64,17 +76,6 @@ CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertic
 
 ```
 
-
-### **🔹 Description des composants**
-- **GitHub** : Contient le code source et gère l’intégration et le déploiement continu (CI/CD) avec GitHub Actions.
-- **Vultr (Ubuntu)** : Héberge les services Docker pour exécuter l’ensemble du pipeline.
-- **Docker Compose** : Gère le déploiement des services (MySQL, DBT, Vertica, Metabase, Airflow).
-- **Airflow** : Orchestration des tâches ETL (extraction, transformation, chargement des données).
-- **CSV** : Fichier source contenant les données brutes.
-- **MySQL** : Stockage temporaire des données avant transformation.
-- **DBT (Data Build Tool)** : Transformation et modélisation des données.
-- **Vertica** : Stockage analytique des données transformées.
-- **Metabase** : Visualisation des données stockées dans Vertica.
 
 ---
 
