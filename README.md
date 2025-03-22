@@ -1,16 +1,7 @@
-# Pipeline Data Vultr
+# Conception et implémentation d'un Pipeline Data sur Vultr
+Ceci est un exemple de Pipeline Data qui tourne sur un Serveur Ubuntu 24.04 LTS x64 dans le cloud Vultr
 
 ## **1️⃣ Architecture du Pipeline**
-Le pipeline de données suit l’architecture suivante :
-
-
-```
-
-GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airflow (Orchestration)
-
-CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
-
-```
 
 ### **🔹 Description des composants**
 - **GitHub** : Contient le code source et gère l’intégration et le déploiement continu (CI/CD) avec GitHub Actions.
@@ -23,6 +14,17 @@ CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertic
 - **Vertica** : Stockage analytique des données transformées.
 - **Metabase** : Visualisation des données stockées dans Vertica.
 
+
+Le pipeline de données suit l’architecture suivante :
+
+
+```
+
+GitHub (Code & CI/CD) → Vultr (Ubuntu) → Docker Compose (Services) → Airflow (Orchestration)
+
+CSV (Source) → MySQL (Stockage temporaire) → DBT (Transformation) → Vertica (Stockage Analytique) → Metabase (Visualisation)
+
+```
 
 ### Schéma du Pipeline
 
